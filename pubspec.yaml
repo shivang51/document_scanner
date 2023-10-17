@@ -17,7 +17,7 @@ dependencies:
   pdf: ^3.10.4
   permission_handler: ^11.0.1
   reorderable_grid_view: ^2.2.7
-  uuid: ^4.1.0
+  uuid: ^3.0.7
   path: any
 
 dev_dependencies:
