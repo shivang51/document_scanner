@@ -1,15 +1,21 @@
 import 'dart:io';
+import 'package:document_scanner/src/external/shrared_pref.handle.dart';
 import 'package:edge_detection/edge_detection.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'picked_image.dart';
 
 class ScannedImages extends StatefulWidget {
-  const ScannedImages({super.key, required this.onAddFile});
+  const ScannedImages(
+      {super.key, required this.onAddFile, required this.onRemoveFile});
 
   final Function(File file) onAddFile;
+  final Function(File file) onRemoveFile;
 
   @override
   State<ScannedImages> createState() => _ScannedImagesState();
@@ -38,9 +44,6 @@ class _ScannedImagesState extends State<ScannedImages> {
 
     bool success = await EdgeDetection.detectEdge(
       imagePath,
-      androidCropTitle: 'Crop',
-      androidCropBlackWhiteTitle: 'Black White',
-      androidCropReset: 'Reset',
     );
 
     if (!success) return;
@@ -50,6 +53,23 @@ class _ScannedImagesState extends State<ScannedImages> {
       pickedImages.add(imageFile);
       widget.onAddFile(imageFile);
     });
+  }
+
+  void _onRemoveImage(File image) {
+    setState(() {
+      pickedImages.remove(image);
+      widget.onRemoveFile(image);
+    });
+  }
+
+  @override
+  void initState() {
+    SharedPrefHandle.getScannedImages().then((imagesPath) {
+      setState(() {
+        pickedImages = imagesPath.map((e) => File(e)).toList();
+      });
+    });
+    super.initState();
   }
 
   @override
@@ -77,6 +97,7 @@ class _ScannedImagesState extends State<ScannedImages> {
       ),
       footer: [
         ElevatedButton(
+          key: const ValueKey('add-image'),
           onPressed: _onAddImage,
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
@@ -88,11 +109,10 @@ class _ScannedImagesState extends State<ScannedImages> {
       ],
       children: pickedImages
           .map(
-            (e) => Card(
+            (e) => PickedImage(
               key: ValueKey(e),
-              child: Center(
-                child: Image.file(e),
-              ),
+              image: e,
+              onRemove: _onRemoveImage,
             ),
           )
           .toList(),
