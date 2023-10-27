@@ -8,14 +8,21 @@ class PickedImage extends StatelessWidget {
     super.key,
     required this.image,
     required this.onRemove,
+    required this.onUpdate,
   });
 
   final File image;
   final Function(File image) onRemove;
+  final Function(File oldImage, File image) onUpdate;
+
+  void onSave(File newImage) {
+    onUpdate(image, newImage);
+  }
 
   void onImageClick(BuildContext context) {
+    final args = ImageSettingsPageArgs(image, onSave);
     Navigator.of(context).push(
-      ImageSettingsPage.route(image),
+      ImageSettingsPage.route(args),
     );
   }
 

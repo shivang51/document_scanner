@@ -6,16 +6,20 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'picked_image.dart';
 
 class ScannedImages extends StatefulWidget {
-  const ScannedImages(
-      {super.key, required this.onAddFile, required this.onRemoveFile});
+  const ScannedImages({
+    super.key,
+    required this.onAddFile,
+    required this.onRemoveFile,
+    required this.onUpdateFile,
+  });
 
   final Function(File file) onAddFile;
   final Function(File file) onRemoveFile;
+  final Function(List<File> file) onUpdateFile;
 
   @override
   State<ScannedImages> createState() => _ScannedImagesState();
@@ -59,6 +63,14 @@ class _ScannedImagesState extends State<ScannedImages> {
     setState(() {
       pickedImages.remove(image);
       widget.onRemoveFile(image);
+    });
+  }
+
+  void _onUpdateImage(File oldImage, File image) {
+    setState(() {
+      int ind = pickedImages.indexOf(oldImage);
+      pickedImages[ind] = image;
+      widget.onUpdateFile(pickedImages);
     });
   }
 
@@ -113,6 +125,7 @@ class _ScannedImagesState extends State<ScannedImages> {
               key: ValueKey(e),
               image: e,
               onRemove: _onRemoveImage,
+              onUpdate: _onUpdateImage,
             ),
           )
           .toList(),

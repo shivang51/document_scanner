@@ -39,17 +39,28 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget> {
     SharedPrefHandle.setScannedImages(pickedImagesPath);
   }
 
+  void onUpdateFile(List<File> files) {
+    pickedImages = files;
+    var pickedImagesPath = pickedImages.map((e) => e.path).toList();
+    SharedPrefHandle.setScannedImages(pickedImagesPath);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Document Scanner'),
+        actions: [
+          Text("${pickedImages.length} scans"),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: ScannedImages(
           onAddFile: onAddFile,
           onRemoveFile: onRemoveFile,
+          onUpdateFile: onUpdateFile,
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
