@@ -9,10 +9,12 @@ class PickedImage extends StatelessWidget {
     required this.image,
     required this.onRemove,
     required this.onUpdate,
+    required this.onInvertAll,
   });
 
   final File image;
   final Function(File image) onRemove;
+  final Function() onInvertAll;
   final Function(File oldImage, File image) onUpdate;
 
   void onSave(File newImage) {
@@ -20,7 +22,7 @@ class PickedImage extends StatelessWidget {
   }
 
   void onImageClick(BuildContext context) {
-    final args = ImageSettingsPageArgs(image, onSave);
+    final args = ImageSettingsPageArgs(image, onSave, onInvertAll);
     Navigator.of(context).push(
       ImageSettingsPage.route(args),
     );
@@ -42,9 +44,7 @@ class PickedImage extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.center,
-            child: Image.file(
-              image,
-            ),
+            child: Image.file(image),
           ),
           Align(
             alignment: Alignment.topRight,

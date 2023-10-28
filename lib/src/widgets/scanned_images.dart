@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:document_scanner/src/external/shrared_pref.handle.dart';
+import 'package:document_scanner/src/utils/utils.dart';
 import 'package:edge_detection/edge_detection.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:path/path.dart';
@@ -28,6 +30,10 @@ class ScannedImages extends StatefulWidget {
 class _ScannedImagesState extends State<ScannedImages> {
   final double scannedImageWidth = 150.0;
 
+  String tempPath = "";
+  int invertProgress = 0;
+  bool inverting = false;
+
   List<File> pickedImages = [];
 
   Future<bool> _checkPermission() async {
@@ -43,7 +49,7 @@ class _ScannedImagesState extends State<ScannedImages> {
   void _onAddImage() async {
     await _checkPermission();
 
-    String imagePath = join((await getTemporaryDirectory()).path,
+    String imagePath = join(tempPath,
         "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.jpeg");
 
     bool success = await EdgeDetection.detectEdge(
@@ -53,6 +59,9 @@ class _ScannedImagesState extends State<ScannedImages> {
     if (!success) return;
 
     final imageFile = File(imagePath);
+
+    if (pickedImages.contains(imageFile)) return;
+
     setState(() {
       pickedImages.add(imageFile);
       widget.onAddFile(imageFile);
@@ -74,13 +83,78 @@ class _ScannedImagesState extends State<ScannedImages> {
     });
   }
 
+  void _invertAll(BuildContext context) {
+    setState(() {
+      invertProgress = 0;
+      inverting = true;
+    });
+
+    for (var ind = 0; ind < pickedImages.length; ind++) {
+      final image = pickedImages[ind];
+
+      final grayPixels = convertToBlackAndWhite(image.readAsBytesSync());
+      String imagePath = join(
+        tempPath,
+        "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.jpeg",
+      );
+
+      File file = File(imagePath);
+      file.writeAsBytesSync(grayPixels);
+
+      setState(() {
+        image.delete();
+        pickedImages[ind] = file;
+        invertProgress += 1;
+      });
+    }
+
+    Navigator.of(context).pop();
+    Navigator.of(context).pop();
+
+    setState(() {
+      widget.onUpdateFile(pickedImages);
+      inverting = false;
+      invertProgress = 0;
+    });
+  }
+
+  void _onInvertAll(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog.adaptive(
+          title: const Text("Are you sure?"),
+          content: const Text("This action is not reversible."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => _invertAll(context),
+              child: const Text("Continue"),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     SharedPrefHandle.getScannedImages().then((imagesPath) {
       setState(() {
-        pickedImages = imagesPath.map((e) => File(e)).toList();
+        for (final imagePath in imagesPath) {
+          final image = File(imagePath);
+          if (!image.existsSync() || pickedImages.contains(image)) continue;
+          pickedImages.add(image);
+        }
+        widget.onUpdateFile(pickedImages);
       });
     });
+    if (tempPath == "") {
+      getTemporaryDirectory().then((value) => tempPath = value.path);
+    }
     super.initState();
   }
 
@@ -126,6 +200,7 @@ class _ScannedImagesState extends State<ScannedImages> {
               image: e,
               onRemove: _onRemoveImage,
               onUpdate: _onUpdateImage,
+              onInvertAll: () => _onInvertAll(context),
             ),
           )
           .toList(),

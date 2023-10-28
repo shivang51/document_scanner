@@ -2,17 +2,22 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:image/image.dart' as image;
 import 'package:crop_image/crop_image.dart';
+import 'package:document_scanner/src/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ImageSettingsPageArgs {
-  const ImageSettingsPageArgs(this.imageFile, this.onSaveFile);
+  const ImageSettingsPageArgs(
+    this.imageFile,
+    this.onSaveFile,
+    this.onInvertAll,
+  );
 
   final File imageFile;
   final Function(File newImage) onSaveFile;
+  final Function() onInvertAll;
 }
 
 class ImageSettingsPage extends StatelessWidget {
@@ -37,6 +42,7 @@ class ImageSettingsPage extends StatelessWidget {
       body: ImageSettingsBody(
         imageFile: args.imageFile,
         onImageSave: args.onSaveFile,
+        onInvertAll: args.onInvertAll,
       ),
     );
   }
@@ -47,10 +53,12 @@ class ImageSettingsBody extends StatefulWidget {
     super.key,
     required this.imageFile,
     required this.onImageSave,
+    required this.onInvertAll,
   });
 
   final File imageFile;
   final Function(File newImage) onImageSave;
+  final Function() onInvertAll;
 
   @override
   State<ImageSettingsBody> createState() => _ImageSettingsBodyState();
@@ -59,6 +67,7 @@ class ImageSettingsBody extends StatefulWidget {
 class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   late CropController cropController;
   late Uint8List imageBytes;
+  bool isBW = false;
 
   @override
   void initState() {
@@ -66,28 +75,6 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     imageBytes = widget.imageFile.readAsBytesSync();
 
     super.initState();
-  }
-
-  double _getThresholdFromPixels(Uint8List pixels) {
-    // Calculate the average pixel value.
-    int averagePixelValue = 0;
-    for (int i = 0; i < pixels.length; i++) {
-      averagePixelValue += pixels[i];
-    }
-    averagePixelValue ~/= pixels.length;
-
-    // Calculate the standard deviation of the pixel values.
-    double standardDeviation = 0.0;
-    for (int i = 0; i < pixels.length; i++) {
-      standardDeviation += pow(pixels[i] - averagePixelValue, 2).toDouble();
-    }
-    standardDeviation = sqrt(standardDeviation / pixels.length);
-
-    // Calculate the threshold.
-    double threshold = averagePixelValue - standardDeviation;
-
-    // Return the threshold.
-    return threshold;
   }
 
   void _convertBlackAndWhite() async {
@@ -98,27 +85,14 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     );
 
     var imagePixels = data!.buffer.asUint8List();
-    final grayImage = image.decodeImage(imagePixels)!;
+    final grayPixels = convertToBlackAndWhite(imagePixels);
 
-    final threshold = _getThresholdFromPixels(imagePixels);
-
-    debugPrint(threshold.toString());
-
-    for (var e in grayImage) {
-      e.setRgb(
-        e.r > threshold ? 255 : 0,
-        e.g > threshold ? 255 : 0,
-        e.b > threshold ? 255 : 0,
-      );
-    }
-
-    final ui.Image grayscaleImage = await decodeImageFromList(
-      image.encodePng(grayImage),
-    );
+    final ui.Image grayscaleImage = await decodeImageFromList(grayPixels);
     cropController.image = grayscaleImage;
 
     setState(() {
       imageBytes = imagePixels.buffer.asUint8List();
+      isBW = true;
     });
   }
 
@@ -144,6 +118,18 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
         ),
       );
       Navigator.of(context).pop();
+    });
+  }
+
+  void _undoBlackAndWhite() async {
+    final ogBytes = widget.imageFile.readAsBytesSync();
+
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      imageBytes = ogBytes;
+      isBW = false;
     });
   }
 
@@ -175,13 +161,19 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 icon: const Icon(Icons.rotate_right_rounded),
               ),
               IconButton(
-                onPressed: _convertBlackAndWhite,
-                icon: const Icon(Icons.colorize_rounded),
+                isSelected: isBW,
+                selectedIcon: const Icon(Icons.invert_colors_off_rounded),
+                onPressed: !isBW ? _convertBlackAndWhite : _undoBlackAndWhite,
+                icon: const Icon(Icons.invert_colors_rounded),
               ),
               IconButton(
                 onPressed: () => _onSaveWithMsg(context),
                 icon: const Icon(Icons.save),
               ),
+              TextButton(
+                onPressed: widget.onInvertAll,
+                child: const Text("Invert All"),
+              )
             ],
           ),
         )

@@ -28,19 +28,27 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget> {
   }
 
   void onAddFile(File file) {
-    pickedImages.add(file);
+    if (pickedImages.contains(file)) return;
+
+    setState(() {
+      pickedImages.add(file);
+    });
     var pickedImagesPath = pickedImages.map((e) => e.path).toList();
     SharedPrefHandle.setScannedImages(pickedImagesPath);
   }
 
   void onRemoveFile(File file) {
-    pickedImages.remove(file);
+    setState(() {
+      pickedImages.remove(file);
+    });
     var pickedImagesPath = pickedImages.map((e) => e.path).toList();
     SharedPrefHandle.setScannedImages(pickedImagesPath);
   }
 
   void onUpdateFile(List<File> files) {
-    pickedImages = files;
+    setState(() {
+      pickedImages = files;
+    });
     var pickedImagesPath = pickedImages.map((e) => e.path).toList();
     SharedPrefHandle.setScannedImages(pickedImagesPath);
   }
