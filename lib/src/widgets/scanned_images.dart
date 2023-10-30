@@ -3,7 +3,6 @@ import 'package:document_scanner/src/external/shrared_pref.handle.dart';
 import 'package:document_scanner/src/utils/utils.dart';
 import 'package:edge_detection/edge_detection.dart';
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:path/path.dart';

@@ -10,10 +10,6 @@ class DocumentScannerWidget extends StatefulWidget {
 
   final Function(File scannedPdf) onDone;
 
-  static Future<void> clearScan() async {
-    await SharedPrefHandle.clearScannedImages();
-  }
-
   @override
   State<DocumentScannerWidget> createState() => _DocumentScannerWidgetState();
 }
