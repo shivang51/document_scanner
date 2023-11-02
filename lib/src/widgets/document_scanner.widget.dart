@@ -23,24 +23,6 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget> {
     );
   }
 
-  void onAddFile(File file) {
-    if (pickedImages.contains(file)) return;
-
-    setState(() {
-      pickedImages.add(file);
-    });
-    var pickedImagesPath = pickedImages.map((e) => e.path).toList();
-    SharedPrefHandle.setScannedImages(pickedImagesPath);
-  }
-
-  void onRemoveFile(File file) {
-    setState(() {
-      pickedImages.remove(file);
-    });
-    var pickedImagesPath = pickedImages.map((e) => e.path).toList();
-    SharedPrefHandle.setScannedImages(pickedImagesPath);
-  }
-
   void onUpdateFile(List<File> files) {
     setState(() {
       pickedImages = files;
@@ -62,8 +44,6 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget> {
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: ScannedImages(
-          onAddFile: onAddFile,
-          onRemoveFile: onRemoveFile,
           onUpdateFile: onUpdateFile,
         ),
       ),

@@ -13,13 +13,9 @@ import 'picked_image.dart';
 class ScannedImages extends StatefulWidget {
   const ScannedImages({
     super.key,
-    required this.onAddFile,
-    required this.onRemoveFile,
     required this.onUpdateFile,
   });
 
-  final Function(File file) onAddFile;
-  final Function(File file) onRemoveFile;
   final Function(List<File> file) onUpdateFile;
 
   @override
@@ -63,14 +59,14 @@ class _ScannedImagesState extends State<ScannedImages> {
 
     setState(() {
       pickedImages.add(imageFile);
-      widget.onAddFile(imageFile);
     });
+    widget.onUpdateFile(pickedImages);
   }
 
   void _onRemoveImage(File image) {
     setState(() {
       pickedImages.remove(image);
-      widget.onRemoveFile(image);
+      widget.onUpdateFile(pickedImages);
     });
   }
 
