@@ -42,6 +42,6 @@ Uint8List convertToBlackAndWhite(Uint8List imagePixels) {
 
 Uint8List enhanceImageSharpness(Uint8List imagePixels) {
   var image = image_lib.decodeImage(imagePixels)!;
-  image = image_lib.adjustColor(image, brightness: 1.5);
+  image = image_lib.adjustColor(image, brightness: .5);
   return image_lib.encodePng(image);
 }

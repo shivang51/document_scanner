@@ -186,9 +186,9 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 icon: const Icon(Icons.invert_colors_rounded),
               ),
               IconButton(
-                selectedIcon: const Icon(Icons.camera_enhance_rounded),
+                selectedIcon: const Icon(Icons.brightness_high),
                 onPressed: _enhanceImage,
-                icon: const Icon(Icons.camera_enhance_rounded),
+                icon: const Icon(Icons.brightness_high),
               ),
               IconButton(
                 onPressed: () => _onSaveWithMsg(context),
