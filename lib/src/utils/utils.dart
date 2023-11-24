@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:image/image.dart' as image_lib;
 
 double _getThresholdFromPixels(Uint8List pixels) {
@@ -37,4 +38,10 @@ Uint8List convertToBlackAndWhite(Uint8List imagePixels) {
   }
 
   return image_lib.encodePng(grayImage);
+}
+
+Uint8List enhanceImageSharpness(Uint8List imagePixels) {
+  var image = image_lib.decodeImage(imagePixels)!;
+  image = image_lib.adjustColor(image, brightness: 1.5);
+  return image_lib.encodePng(image);
 }

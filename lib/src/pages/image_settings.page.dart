@@ -100,8 +100,10 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     final data = await bitmap.toByteData(format: ui.ImageByteFormat.png);
     final bytes = data!.buffer.asUint8List();
 
-    String imagePath = join((await getTemporaryDirectory()).path,
-        "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.jpeg");
+    String imagePath = join(
+      (await getTemporaryDirectory()).path,
+      "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.jpeg",
+    );
 
     final newFile = File(imagePath);
     newFile.writeAsBytesSync(bytes);
@@ -129,6 +131,24 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     setState(() {
       imageBytes = ogBytes;
       isBW = false;
+    });
+  }
+
+  void _enhanceImage() async {
+    var bitmap = await cropController.croppedBitmap();
+
+    final data = await bitmap.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    var imagePixels = data!.buffer.asUint8List();
+    final enhancedPixels = enhanceImageSharpness(imagePixels);
+
+    final ui.Image enhancedImage = await decodeImageFromList(enhancedPixels);
+    cropController.image = enhancedImage;
+
+    setState(() {
+      imageBytes = imagePixels.buffer.asUint8List();
     });
   }
 
@@ -164,6 +184,11 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 selectedIcon: const Icon(Icons.invert_colors_off_rounded),
                 onPressed: !isBW ? _convertBlackAndWhite : _undoBlackAndWhite,
                 icon: const Icon(Icons.invert_colors_rounded),
+              ),
+              IconButton(
+                selectedIcon: const Icon(Icons.camera_enhance_rounded),
+                onPressed: _enhanceImage,
+                icon: const Icon(Icons.camera_enhance_rounded),
               ),
               IconButton(
                 onPressed: () => _onSaveWithMsg(context),
