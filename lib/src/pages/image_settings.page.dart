@@ -68,6 +68,8 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   late Uint8List imageBytes;
   bool isBW = false;
 
+  bool filtering = false;
+
   @override
   void initState() {
     cropController = CropController();
@@ -135,6 +137,10 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   }
 
   void _enhanceImage() async {
+    setState(() {
+      filtering = true;
+    });
+
     var bitmap = await cropController.croppedBitmap();
 
     final data = await bitmap.toByteData(
@@ -148,6 +154,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     cropController.image = enhancedImage;
 
     setState(() {
+      filtering = false;
       imageBytes = imagePixels.buffer.asUint8List();
     });
   }
@@ -187,8 +194,10 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
               ),
               IconButton(
                 selectedIcon: const Icon(Icons.brightness_high),
-                onPressed: _enhanceImage,
-                icon: const Icon(Icons.brightness_high),
+                onPressed: !filtering ? _enhanceImage : null,
+                icon: Icon(
+                  !filtering ? Icons.brightness_high : Icons.brightness_low,
+                ),
               ),
               IconButton(
                 onPressed: () => _onSaveWithMsg(context),
