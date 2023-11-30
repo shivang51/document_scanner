@@ -27,23 +27,14 @@ double _getThresholdFromPixels(Uint8List pixels) {
 }
 
 Uint8List convertToBlackAndWhite(Uint8List imagePixels) {
-  final grayImage = image_lib.decodeImage(imagePixels)!;
-
-  final threshold = _getThresholdFromPixels(imagePixels);
-
-  for (var e in grayImage) {
-    bool test = e.r > threshold && e.b > threshold && e.g > threshold;
-    int value = test ? 255 : 0;
-    e.setRgb(value, value, value);
-  }
-
+  var grayImage = image_lib.decodeImage(imagePixels)!;
+  grayImage = image_lib.grayscale(grayImage);
   return image_lib.encodePng(grayImage);
 }
 
 Uint8List enhanceImageSharpness(Uint8List imagePixels) {
   var image = image_lib.decodeImage(imagePixels)!;
   // image = image_lib.adjustColor(image, brightness: .5);
-  image = image_lib.contrast(image, contrast: 140);
-  image = image_lib.noise(image, 0.01, type: image_lib.NoiseType.gaussian);
+  image = image_lib.contrast(image, contrast: 110);
   return image_lib.encodePng(image);
 }
