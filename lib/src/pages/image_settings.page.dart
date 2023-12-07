@@ -67,8 +67,12 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   late CropController cropController;
   late Uint8List imageBytes;
   bool isBW = false;
+  bool isGreyScale = false;
+  bool isEnhanced = false;
 
   bool filtering = false;
+
+  List<Uint8List> previous = [];
 
   @override
   void initState() {
@@ -92,8 +96,29 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     cropController.image = grayscaleImage;
 
     setState(() {
+      previous.add(imagePixels);
       imageBytes = imagePixels.buffer.asUint8List();
       isBW = true;
+    });
+  }
+
+  void _convertToGreyScale() async {
+    var bitmap = await cropController.croppedBitmap();
+
+    final data = await bitmap.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    var imagePixels = data!.buffer.asUint8List();
+    final grayPixels = convertToGreyScale(imagePixels);
+
+    final ui.Image grayscaleImage = await decodeImageFromList(grayPixels);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.add(imagePixels);
+      imageBytes = imagePixels.buffer.asUint8List();
+      isGreyScale = true;
     });
   }
 
@@ -125,14 +150,28 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   }
 
   void _undoBlackAndWhite() async {
-    final ogBytes = widget.imageFile.readAsBytesSync();
+    final ogBytes = previous.last;
 
     final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
     cropController.image = grayscaleImage;
 
     setState(() {
+      previous.removeLast();
       imageBytes = ogBytes;
       isBW = false;
+    });
+  }
+
+  void _undoGreyScale() async {
+    final ogBytes = previous.last;
+
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.removeLast();
+      imageBytes = ogBytes;
+      isGreyScale = false;
     });
   }
 
@@ -154,8 +193,22 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     cropController.image = enhancedImage;
 
     setState(() {
+      previous.add(imagePixels);
+      isEnhanced = true;
       filtering = false;
       imageBytes = imagePixels.buffer.asUint8List();
+    });
+  }
+
+  void _undoEnhanceImage() async {
+    final ogBytes = previous.last;
+
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.removeLast();
+      isEnhanced = false;
     });
   }
 
@@ -187,14 +240,25 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 icon: const Icon(Icons.rotate_right_rounded),
               ),
               IconButton(
+                isSelected: isGreyScale,
+                selectedIcon: const Icon(Icons.format_color_fill),
+                onPressed: !isGreyScale ? _convertToGreyScale : _undoGreyScale,
+                icon: const Icon(Icons.format_color_fill),
+              ),
+              IconButton(
                 isSelected: isBW,
                 selectedIcon: const Icon(Icons.invert_colors_off_rounded),
                 onPressed: !isBW ? _convertBlackAndWhite : _undoBlackAndWhite,
                 icon: const Icon(Icons.invert_colors_rounded),
               ),
               IconButton(
+                isSelected: isEnhanced,
                 selectedIcon: const Icon(Icons.brightness_high),
-                onPressed: !filtering ? _enhanceImage : null,
+                onPressed: !filtering
+                    ? isEnhanced
+                        ? _undoEnhanceImage
+                        : _enhanceImage
+                    : null,
                 icon: Icon(
                   !filtering ? Icons.brightness_high : Icons.brightness_low,
                 ),
