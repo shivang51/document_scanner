@@ -66,6 +66,7 @@ class ImageSettingsBody extends StatefulWidget {
 class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   late CropController cropController;
   late Uint8List imageBytes;
+  bool isFiltered = false;
   bool isBW = false;
   bool isGreyScale = false;
   bool isEnhanced = false;
@@ -99,6 +100,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
       previous.add(imagePixels);
       imageBytes = imagePixels.buffer.asUint8List();
       isBW = true;
+      isFiltered = true;
     });
   }
 
@@ -119,6 +121,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
       previous.add(imagePixels);
       imageBytes = imagePixels.buffer.asUint8List();
       isGreyScale = true;
+      isFiltered = true;
     });
   }
 
@@ -159,6 +162,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
       previous.removeLast();
       imageBytes = ogBytes;
       isBW = false;
+      isFiltered = false;
     });
   }
 
@@ -172,6 +176,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
       previous.removeLast();
       imageBytes = ogBytes;
       isGreyScale = false;
+      isFiltered = false;
     });
   }
 
@@ -196,6 +201,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
       previous.add(imagePixels);
       isEnhanced = true;
       filtering = false;
+      isFiltered = true;
       imageBytes = imagePixels.buffer.asUint8List();
     });
   }
@@ -209,6 +215,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     setState(() {
       previous.removeLast();
       isEnhanced = false;
+      isFiltered = false;
     });
   }
 
@@ -242,13 +249,21 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
               IconButton(
                 isSelected: isGreyScale,
                 selectedIcon: const Icon(Icons.format_color_fill),
-                onPressed: !isGreyScale ? _convertToGreyScale : _undoGreyScale,
+                onPressed: !isGreyScale
+                    ? !isFiltered
+                        ? _convertToGreyScale
+                        : null
+                    : _undoGreyScale,
                 icon: const Icon(Icons.format_color_fill),
               ),
               IconButton(
                 isSelected: isBW,
                 selectedIcon: const Icon(Icons.invert_colors_off_rounded),
-                onPressed: !isBW ? _convertBlackAndWhite : _undoBlackAndWhite,
+                onPressed: !isBW
+                    ? !isFiltered
+                        ? _convertBlackAndWhite
+                        : null
+                    : _undoBlackAndWhite,
                 icon: const Icon(Icons.invert_colors_rounded),
               ),
               IconButton(
@@ -257,7 +272,9 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 onPressed: !filtering
                     ? isEnhanced
                         ? _undoEnhanceImage
-                        : _enhanceImage
+                        : !isFiltered
+                            ? _enhanceImage
+                            : null
                     : null,
                 icon: Icon(
                   !filtering ? Icons.brightness_high : Icons.brightness_low,
