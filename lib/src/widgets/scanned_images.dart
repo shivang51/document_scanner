@@ -57,6 +57,9 @@ class _ScannedImagesState extends State<ScannedImages> {
 
     if (pickedImages.contains(imageFile)) return;
 
+    var compressed = compressImage(imageFile.readAsBytesSync());
+    imageFile.writeAsBytesSync(compressed);
+
     setState(() {
       pickedImages.add(imageFile);
     });
