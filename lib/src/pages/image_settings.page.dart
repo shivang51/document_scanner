@@ -65,7 +65,6 @@ class ImageSettingsBody extends StatefulWidget {
 
 class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   late CropController cropController;
-  late Uint8List imageBytes;
   bool isFiltered = false;
   bool isBW = false;
   bool isGreyScale = false;
@@ -78,15 +77,13 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
   @override
   void initState() {
     cropController = CropController();
-    imageBytes = widget.imageFile.readAsBytesSync();
-
     super.initState();
   }
 
   void _convertBlackAndWhite() async {
-    var bitmap = await cropController.croppedBitmap();
+    var img = cropController.getImage();
 
-    final data = await bitmap.toByteData(
+    final data = await img!.toByteData(
       format: ui.ImageByteFormat.png,
     );
 
@@ -98,16 +95,28 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
 
     setState(() {
       previous.add(imagePixels);
-      imageBytes = imagePixels.buffer.asUint8List();
       isBW = true;
       isFiltered = true;
     });
   }
 
-  void _convertToGreyScale() async {
-    var bitmap = await cropController.croppedBitmap();
+  void _undoBlackAndWhite() async {
+    final ogBytes = previous.last;
 
-    final data = await bitmap.toByteData(
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.removeLast();
+      isBW = false;
+      isFiltered = false;
+    });
+  }
+
+  void _convertToGreyScale() async {
+    var img = cropController.getImage();
+
+    final data = await img!.toByteData(
       format: ui.ImageByteFormat.png,
     );
 
@@ -119,9 +128,59 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
 
     setState(() {
       previous.add(imagePixels);
-      imageBytes = imagePixels.buffer.asUint8List();
       isGreyScale = true;
       isFiltered = true;
+    });
+  }
+
+  void _undoGreyScale() async {
+    final ogBytes = previous.last;
+
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.removeLast();
+      isGreyScale = false;
+      isFiltered = false;
+    });
+  }
+
+  void _enhanceImage() async {
+    setState(() {
+      filtering = true;
+    });
+
+    var img = cropController.getImage();
+
+    final data = await img!.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    var imagePixels = data!.buffer.asUint8List();
+    final enhancedPixels = enhanceImageSharpness(imagePixels);
+
+    final ui.Image enhancedImage = await decodeImageFromList(enhancedPixels);
+    cropController.image = enhancedImage;
+
+    setState(() {
+      previous.add(imagePixels);
+      isEnhanced = true;
+      filtering = false;
+      isFiltered = true;
+    });
+  }
+
+  void _undoEnhanceImage() async {
+    final ogBytes = previous.last;
+
+    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
+    cropController.image = grayscaleImage;
+
+    setState(() {
+      previous.removeLast();
+      isEnhanced = false;
+      isFiltered = false;
     });
   }
 
@@ -152,73 +211,6 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
     });
   }
 
-  void _undoBlackAndWhite() async {
-    final ogBytes = previous.last;
-
-    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
-    cropController.image = grayscaleImage;
-
-    setState(() {
-      previous.removeLast();
-      imageBytes = ogBytes;
-      isBW = false;
-      isFiltered = false;
-    });
-  }
-
-  void _undoGreyScale() async {
-    final ogBytes = previous.last;
-
-    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
-    cropController.image = grayscaleImage;
-
-    setState(() {
-      previous.removeLast();
-      imageBytes = ogBytes;
-      isGreyScale = false;
-      isFiltered = false;
-    });
-  }
-
-  void _enhanceImage() async {
-    setState(() {
-      filtering = true;
-    });
-
-    var bitmap = await cropController.croppedBitmap();
-
-    final data = await bitmap.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-
-    var imagePixels = data!.buffer.asUint8List();
-    final enhancedPixels = enhanceImageSharpness(imagePixels);
-
-    final ui.Image enhancedImage = await decodeImageFromList(enhancedPixels);
-    cropController.image = enhancedImage;
-
-    setState(() {
-      previous.add(imagePixels);
-      isEnhanced = true;
-      filtering = false;
-      isFiltered = true;
-      imageBytes = imagePixels.buffer.asUint8List();
-    });
-  }
-
-  void _undoEnhanceImage() async {
-    final ogBytes = previous.last;
-
-    final ui.Image grayscaleImage = await decodeImageFromList(ogBytes);
-    cropController.image = grayscaleImage;
-
-    setState(() {
-      previous.removeLast();
-      isEnhanced = false;
-      isFiltered = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -226,7 +218,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
         Expanded(
           child: CropImage(
             controller: cropController,
-            image: Image.memory(imageBytes),
+            image: Image.file(widget.imageFile),
             gridColor: Colors.blueAccent,
           ),
         ),
