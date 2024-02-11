@@ -248,16 +248,16 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                     : _undoGreyScale,
                 icon: const Icon(Icons.format_color_fill),
               ),
-              IconButton(
-                isSelected: isBW,
-                selectedIcon: const Icon(Icons.invert_colors_off_rounded),
-                onPressed: !isBW
-                    ? !isFiltered
-                        ? _convertBlackAndWhite
-                        : null
-                    : _undoBlackAndWhite,
-                icon: const Icon(Icons.invert_colors_rounded),
-              ),
+              // IconButton(
+              //   isSelected: isBW,
+              //   selectedIcon: const Icon(Icons.invert_colors_off_rounded),
+              //   onPressed: !isBW
+              //       ? !isFiltered
+              //           ? _convertBlackAndWhite
+              //           : null
+              //       : _undoBlackAndWhite,
+              //   icon: const Icon(Icons.invert_colors_rounded),
+              // ),
               IconButton(
                 isSelected: isEnhanced,
                 selectedIcon: const Icon(Icons.brightness_high),
