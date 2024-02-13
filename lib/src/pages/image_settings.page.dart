@@ -225,6 +225,7 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
                 onPressed: () {
@@ -276,10 +277,10 @@ class _ImageSettingsBodyState extends State<ImageSettingsBody> {
                 onPressed: () => _onSaveWithMsg(context),
                 icon: const Icon(Icons.save),
               ),
-              TextButton(
-                onPressed: widget.onInvertAll,
-                child: const Text("Invert All"),
-              )
+              // TextButton(
+              //   onPressed: widget.onInvertAll,
+              //   child: const Text("Invert All"),
+              // )
             ],
           ),
         )
